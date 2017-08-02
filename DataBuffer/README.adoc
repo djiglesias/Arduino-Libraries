@@ -5,7 +5,7 @@ Arduinos. Create an array of your data type and pass it to the
 serialization function and it will return an array of bytes.
 
 Serialization Organization:
-[start byte][length byte][data bytes][checksum bytes][stop byte]
+{start byte}[length byte][data bytes][checksum bytes][stop byte]
 
 For more information about this library please visit us at
 https://github.com/djiglesias/Arduino-Libraries
