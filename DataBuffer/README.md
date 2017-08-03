@@ -4,12 +4,14 @@ Enables serialization of data over a serial connection between two
 Arduinos. Create an array of your data type and pass it to the 
 serialization function and it will return an array of bytes.
 
+The organization of the bytes are arranged with a single leading and 
+trailing byte to indicate the start and end of a data package. The 
+second byte represents the length (in bytes) of the data contained.
+After the data bytes, there is a checksum of length sizeof(type) to
+verify the quality of the data received.
+
 For more information about this library please visit us at
 https://github.com/djiglesias/Arduino-Libraries
-
-## Serialization Organization
-
-{start byte}{length byte}{data bytes}{checksum bytes}{stop byte}
 
 ## Hardware Setup
 
