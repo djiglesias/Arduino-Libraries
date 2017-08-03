@@ -39,7 +39,7 @@ template<typename T>
 class Complementary_Filter{
 public:
   T get_filtered_result(unsigned long dt, T a, T b);
-  inline void  set_time_constant(float toa) {this->tao = tao;}
+  inline void  set_time_constant(float tao) {this->tao = tao;}
   inline float get_time_constant() {return tao;}
 
 private:
