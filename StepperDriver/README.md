@@ -1,13 +1,23 @@
-= Automation Direct Stepper Driver Class =
+# Automation Direct Stepper Driver Class #
 
-...
+## Hardware Setup ##
+This library is for controlling stepper motor drivers from 
+[Automation Direct](https://www.automationdirect.com/adc/Home/Home) 
+from an Arduino Uno or Mega 2560 with a 
+[Pololu Serial Adapter](https://www.pololu.com/product/126). 
 
-For more information about this library please visit us at
-https://github.com/djiglesias/Arduino-Libraries
+Compatible stepper drivers:
+* STP-DRV-4035
+* STP-DRV-4850
+* STP-DRV-6575
+* STP-DRV-80100
 
-== License ==
+For more information about this library please visit me at 
+<https://github.com/djiglesias/Arduino-Libraries>.
 
-Copyright (C) 2017 by Duncan Iglesias
+## License ##
+
+Copyright &copy; 2017 by Duncan Iglesias
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
