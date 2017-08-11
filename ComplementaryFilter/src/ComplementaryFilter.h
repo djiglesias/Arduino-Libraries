@@ -1,5 +1,5 @@
 /*
-  Complementary_Filter.h - Data Processing - Version 1.
+  ComplementaryFilter.h - Data Processing - Version 1.
   Copyright (c) 2017 Duncan Iglesias.  All right reserved.
 
   Source:
@@ -36,7 +36,7 @@
 #include "Arduino.h"
 
 template<typename T>
-class Complementary_Filter{
+class ComplementaryFilter{
 public:
   T get_filtered_result(unsigned long dt, T a, T b);
   inline void  set_time_constant(float tao) {this->tao = tao;}
@@ -52,7 +52,7 @@ private:
 
 
 template<typename T>
-T Complementary_Filter<T>::get_filtered_result(unsigned long t, T a, T b) {  
+T ComplementaryFilter<T>::get_filtered_result(unsigned long t, T a, T b) {  
   
   // Update time.
   float delta_t = (t - last_read_time)/1000.0;

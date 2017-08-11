@@ -17,14 +17,14 @@
 **********************************************************************************/
 #include <Adafruit_LSM303_U.h>
 #include <Adafruit_L3GD20_U.h>
-#include "Complementary_Filter.h"
+#include "ComplementaryFilter.h"
 
 #define FLUSH                 20
 
 Adafruit_LSM303_Accel_Unified accel = Adafruit_LSM303_Accel_Unified(30301);
 Adafruit_L3GD20_Unified       gyro  = Adafruit_L3GD20_Unified(20);
 
-Complementary_Filter<float>   comp_roll, comp_pitch;
+ComplementaryFilter<float>   comp_roll, comp_pitch;
 
 /* Calibration Variables for Raw Data */
 float bias_x_accel = 0;
