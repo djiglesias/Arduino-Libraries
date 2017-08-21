@@ -75,6 +75,7 @@
 #define CHANGE_SPEED      "CS"        // Change speed while jogging.
 #define DECEL_RATE        "DE"        // Set deceleration rate (rev/s/s).
 #define DISTANCE          "DI"        // Set distance/position (steps).
+#define FEED_POSITION     "FP"        // Feed to set position.
 #define IMMEDIATE_POS     "IP"        // Request immediate position.
 #define JOG_ACCEL         "JA"        // Set jog acceleration (rev/s/s).
 #define JOG_DISABLE       "JD"        // Disable jog mode.
@@ -87,7 +88,7 @@
 #define SAVE_PARAMS       "SA"        // Save current settings.
 #define STATUS_CODE       "SC"        // Request status code.
 #define STOP_JOG          "SJ"        // Stop jogging.
-#define STOP_KILL_BUF     "SKD"       // Stop and kill buffer.
+#define STOP              "SKD"       // Stop and kill buffer.
 #define SET_POSITION      "SP"        // Set current position.
 #define SEND_STRING       "SS"        // Send string after execution.
 #define STOP_NOW          "ST"        // Stop motor now.
@@ -156,50 +157,54 @@ public:
   ~StepperDriver();
 
   /* Motor Commands */
+  void home();
   void jog(char dir);
   void jog(char dir, double vel);        
   void feedToPosition(double pos);
 
   /* Common Motor Commands */ 
-  inline void home()      {_comm->print(CMD_HOME);}
-  inline void jogDisable(){_comm->print(JOG_DISABLE CR);}
-  inline void mtrDisable(){_comm->print(CMD_DISABLE);}
-  inline void mtrEnable() {_comm->print(CMD_ENABLE);}
-  inline void saveParams(){_comm->print(CMD_SAVE);}
-  inline void stop()      {sendCmd(CMD_STOP);moving = false;}
-  inline void zero()      {_comm->print(CMD_ZERO);}
+  inline void jogDisable(){_comm->print(JOG_DISABLE CR); jog_active=false;    }
+  inline void mtrDisable(){_comm->print(CMD_DISABLE);                         }
+  inline void jogEnable() {_comm->print(JOG_ENABLE CR); jog_active=true;      }
+  inline void mtrEnable() {_comm->print(CMD_ENABLE);                          }
+  inline void saveParams(){_comm->print(CMD_SAVE);                            }
+  inline void stop()      {_comm->print(STOP CR);moving=false;action=false;   }
+  inline void zero()      {stop(); _comm->print(CMD_ZERO);                    }
   
   /* Setter Member Functions */
-  inline void inverseDirection(bool inv){direction = (inv) ? -1 : 1; }
-  inline void setHomeAccel(double acc){mtr_accel = acc; update(MTR_ACC);}
-  inline void setHomeDecel(double dec){mtr_decel = dec; update(MTR_DEC);}
-  inline void setHomeSpeed(double vel){mtr_speed = vel; update(MTR_DEC);}
-  inline void setGearRatio(double num){gear_ratio = num;}
-  inline void setJogAccel(double acc){jog_accel = acc; update(JOG_ACC);}
-  inline void setJogDecel(double dec){jog_decel = dec; update(JOG_DEC);}
-  inline void setJogSpeed(double vel){jog_speed = vel; update(JOG_VEL);}
-  inline void setPinionDiameter(double d){pinion_diameter = d;}
-  inline void setStepResolution(int res){step_resolution = res;}
-  inline void setScalingFactor(double num){scale = num;}
+  inline void inverseDirection(bool inv){direction = (inv) ? -1 : 1;          }
+  inline void setHomeAccel(double acc){mtr_accel = acc; update(MTR_ACC);      }
+  inline void setHomeDecel(double dec){mtr_decel = dec; update(MTR_DEC);      }
+  inline void setHomeSpeed(double vel){mtr_speed = vel; update(MTR_DEC);      }
+  inline void setGearRatio(double num){gear_ratio = num;                      }
+  inline void setJogAccel(double acc){jog_accel = acc; update(JOG_ACC);       }
+  inline void setJogDecel(double dec){jog_decel = dec; update(JOG_DEC);       }
+  inline void setJogSpeed(double vel){jog_speed = vel; update(JOG_VEL);       }
+  inline void setPinionDiameter(double d){pinion_diameter = d;                }
+  inline void setStepResolution(int res){step_resolution = res;               }
+  inline void setScalingFactor(double num){scale = num;                       }
 
   /* Getter Member Functions */
-  inline String getError(){return error;}
-  inline double getJogSpeed(){return jog_speed;}
-  inline double getJogAccel(){return jog_accel;}
-  inline double getHomeSpeed(){return mtr_speed;}
-  inline double getHomeAccel(){return mtr_accel;}
-  inline double getHomeDecel(){return mtr_decel;}
-  inline double getPosition(){return (position = stepToDist(sendCmd(CMD_POLL)));}
-  inline double getGearRatio(){return gear_ratio;}
-  inline double getPinionDiameter(){return pinion_diameter;}
-  inline double getScalingFactor(){return scale;}
-  inline int    getStepResolution(){return step_resolution;}
-  inline bool   isActive(){return active;}
-  inline bool   isMoving(){return moving;}
+  inline String getError(){return error;                                      }
+  inline double getJogSpeed(){return jog_speed;                               }
+  inline double getJogAccel(){return jog_accel;                               }
+  inline double getHomeSpeed(){return mtr_speed;                              }
+  inline double getHomeAccel(){return mtr_accel;                              }
+  inline double getHomeDecel(){return mtr_decel;                              }
+  inline double getPosition(){return (position=stepToDist(sendCmd(CMD_POLL)));}
+  inline double getGearRatio(){return gear_ratio;                             }
+  inline double getPinionDiameter(){return pinion_diameter;                   }
+  inline double getScalingFactor(){return scale;                              }
+  inline int    getStepResolution(){return step_resolution;                   }
+  inline bool   getJogState(){return jog_active;                              }
+  inline bool   isActive(){return active;                                     }
+  inline bool   isMoving(){return moving;                                     }
 
 private:
   /* Motor Parameters */
   bool   active          = false;
+  bool   action          = false;
+  bool   jog_active      = false;
   bool   moving          = false;
   double gear_ratio      = GEAR_RATIO;
   double jog_accel       = INIT_JOG_ACC;
@@ -269,7 +274,9 @@ void StepperDriver::initialize() {
 
   /* Initialize Once */
   if (isActive()) return;
-  active = !active;
+  active     = !active;
+  moving     = false;
+  jog_active = false;
 
   /* Check Motor Status */
   initErrorCodes();
@@ -277,6 +284,7 @@ void StepperDriver::initialize() {
   getCommError(error);
   getMotorStatus(error);
   mtrEnable();
+  jogDisable();
 
   /* Stop All Motion */
   stop(); 
@@ -347,6 +355,9 @@ double StepperDriver::stepToDist(int step) {
 **********************************************************************************/
 void StepperDriver::update(uint8_t cmd) {
 
+  /* Stop Motor */
+  stop();
+
   /* Send Updated Parameters */
   if (cmd == JOG_ACC || cmd == ALL_CMD) {      // Jogging Acceleration.
     String msg = "JA";
@@ -396,6 +407,12 @@ void StepperDriver::update(uint8_t cmd) {
 **********************************************************************************/
 void StepperDriver::jog(char dir) {
   
+  /* Safety Check */
+  if (!jog_active) return;
+
+  /* If Doing Action*/
+  if (action) stop();
+
   /* Update States */
   direction = (dir == 'f') ? -1 : 1; 
 
@@ -405,13 +422,12 @@ void StepperDriver::jog(char dir) {
     cmd += String(direction * linToRev(this->jog_speed));
     cmd += CR;
     _comm->print(cmd);
-  } else {
-    _comm->print(CMD_JOG1);   // Set Zero Speed.
-    _comm->print(CMD_JOG2);   // Enter Jogging Mode.
-    String cmd = "CS";        // Select Direction.
-    cmd += String(direction * linToRev(this->jog_speed));
+  } else {   
+    String cmd = JOG_SPEED;     // Select Direction.
+    cmd += String(direction * linToRev(this->jog_speed), 2);
     cmd += CR;
     _comm->print(cmd);
+    _comm->print(COMMENCE_JOG CR);
   }
   moving = true;
 }
@@ -427,6 +443,12 @@ void StepperDriver::jog(char dir) {
 **********************************************************************************/
 void StepperDriver::jog(char dir, double vel) {
 
+  /* Safety Check */
+  if (!jog_active) return;
+
+  /* If Doing Action*/
+  if (action) stop();
+
   /* Update Direction & Speed */
   direction = (dir == 'f') ? -1 : 1; 
   this->jog_speed = vel;
@@ -438,12 +460,11 @@ void StepperDriver::jog(char dir, double vel) {
     cmd += CR;
     _comm->print(cmd);
   } else {
-    _comm->print(CMD_JOG1);   // Set Zero Speed.
-    _comm->print(CMD_JOG2);   // Enter Jogging Mode.
-    String cmd = "CS";        // Select Direction.
-    cmd += String(direction * linToRev(this->jog_speed));
+    String cmd = JOG_SPEED;     // Select Direction.
+    cmd += String(direction * linToRev(this->jog_speed), 2);
     cmd += CR;
     _comm->print(cmd);
+    _comm->print(COMMENCE_JOG CR);
   }
   moving = true;
 }
@@ -458,12 +479,35 @@ void StepperDriver::jog(char dir, double vel) {
 **********************************************************************************/
 void StepperDriver::feedToPosition(double pos) {
 
+  /* Safety Check */
+  if (!jog_active) return;  
+  stop();
+  action = true;
+
   /* Build & Send Message */
-  String cmd = "DI";
-  cmd += String(distToStep(pos), 2);
+  String cmd = DISTANCE;
+  cmd += String(distToStep(pos));
   cmd += CR;
   _comm->print(cmd);
-  Serial.print(cmd);
+  _comm->print(FEED_POSITION CR);
+}
+
+
+/******************************************************************************//**
+* Return to Home Position
+*
+* Moves the motor back position zero.
+**********************************************************************************/
+void StepperDriver::home() {
+    
+  /* Safety Check */
+  if (!jog_active) return;
+  stop(); 
+  action = true;
+
+  /* Execute Action */
+  _comm->print(CMD_HOME);
+  
 }
 
 
